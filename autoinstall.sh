@@ -63,24 +63,37 @@ installFirewall() {
 installDependencies() {
     echo
     echo -e "[5/${MAX}] Installing dependencies. Please wait..."
-    sudo apt-get install -y build-essential libtool autotools-dev pkg-config libssl-dev libboost-all-dev autoconf automake -qq -y > /dev/null 2>&1
-    sudo apt-get install libzmq3-dev libminiupnpc-dev libssl-dev libevent-dev -qq -y > /dev/null 2>&1
-    sudo apt-get install libgmp-dev -qq -y > /dev/null 2>&1
-    sudo apt-get install openssl -qq -y > /dev/null 2>&1
-    sudo apt-get install software-properties-common -qq -y > /dev/null 2>&1
-    sudo add-apt-repository ppa:bitcoin/bitcoin -y > /dev/null 2>&1
-    sudo apt-get update -qq -y > /dev/null 2>&1
-    sudo apt-get install libdb4.8-dev libdb4.8++-dev -qq -y > /dev/null 2>&1
+	sudo apt-get install -y build-essential libtool autotools-dev pkg-config libssl-dev libboost-all-dev autoconf automake 2>&1
+	sudo apt-get install libzmq3-dev libminiupnpc-dev libssl-dev libevent-dev -y 2>&1
+	sudo apt-get install git 2>&1
+	git clone https://github.com/bitcoin-core/secp256k1 2>&1
+	cd ~/secp256k1 2>&1
+	./autogen.sh 2>&1
+	./configure 2>&1
+	make 2>&1
+	./tests 2>&1
+	sudo make install 2>&1
+	sudo apt-get install libgmp-dev 2>&1
+	sudo apt-get install openssl 2>&1
+	apt-get install software-properties-common && add-apt-repository ppa:bitcoin/bitcoin 2>&1
+	apt-get update 2>&1
+	apt-get install libdb4.8-dev libdb4.8++-dev 2>&1
+	sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=1000 2>&1
+	sudo mkswap /var/swap.img 2>&1
+	sudo swapon /var/swap.img 2>&1
+	sudo chmod 0600 /var/swap.img 2>&1
+	sudo chown root:root /var/swap.img 2>&1
+	cd ~ 2>&1
     echo -e "${NONE}${GREEN}* Done${NONE}";
 }
 
 installWallet() {
     echo
     echo -e "[6/${MAX}] Installing wallet. Please wait..."
-    wget https://github.com/Bitcoinlightning/Bitcoin-Lightning/releases/download/v1.1.0.0/Bitcoin_Lightning-Daemon-1.1.0.0.tar.gz
-    tar xvzf Bitcoin_Lightning-Daemon-1.1.0.0.tar.gz
-    rm Bitcoin_Lightning-Daemon-1.1.0.0.tar.gz
-    chmod 755 Bitcoin_Lightningd
+    git clone https://github.com/ReeCore/Planetpay
+    cd ~/Planetpay/src
+    make -f makefile.unix
+    chmod 755 Planetpayd
     strip $COINDAEMON
     sudo mv $COINDAEMON /usr/bin
     cd
@@ -90,7 +103,7 @@ installWallet() {
 configureWallet() {
     echo
     echo -e "[7/${MAX}] Configuring wallet. Please wait..."
-    mkdir .Bitcoin_Lightning
+    mkdir .Planetpay
     rpcuser=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
     rpcpass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
     echo -e "rpcuser=${rpcuser}\nrpcpassword=${rpcpass}" > ~/$COINCORE/$COINCONFIG
