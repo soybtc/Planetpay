@@ -10,7 +10,7 @@ BOLD='\033[1m'
 UNDERLINE='\033[4m'
 MAX=9
 
-COINGITHUB=https://github.com/PlanetPay
+COINGITHUB=https://github.com/PlanetPay/PlanetPay
 COINPORT=13127
 COINRPCPORT=13126
 COINDAEMON=Planetpayd
@@ -90,7 +90,7 @@ installDependencies() {
 installWallet() {
     echo
     echo -e "[6/${MAX}] Installing wallet. Please wait..."
-    git clone https://github.com/PlanetPay
+    git clone https://github.com/PlanetPay/PlanetPay
     cd ~/Planetpay/src
     make -f makefile.unix
     chmod 755 Planetpayd
