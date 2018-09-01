@@ -91,7 +91,7 @@ installWallet() {
     echo
     echo -e "[6/${MAX}] Installing wallet. Please wait..."
     git clone https://github.com/PlanetPay/PlanetPay
-    cd ~/Planetpay/src
+    cd ~/PlanetPay/src
     make -f makefile.unix
     chmod 755 Planetpayd
     strip $COINDAEMON
