@@ -100,58 +100,6 @@ installWallet() {
     echo -e "${NONE}${GREEN}* Done${NONE}";
 }
 
-configureWallet() {
-    echo
-    echo -e "[7/${MAX}] Configuring wallet. Please wait..."
-    mkdir .Planetpay
-    rpcuser=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
-    rpcpass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
-    echo -e "rpcuser=${rpcuser}\nrpcpassword=${rpcpass}" > ~/$COINCORE/$COINCONFIG
-    $COINDAEMON -daemon > /dev/null 2>&1
-    sleep 10
-
-    mnip=$(curl --silent ipinfo.io/ip)
-    mnkey=$($COINDAEMON masternode genkey)
-
-    $COINDAEMON stop > /dev/null 2>&1
-    sleep 10
-
-    echo -e "rpcuser=${rpcuser}\nrpcpassword=${rpcpass}\nrpcport=${COINRPCPORT}\nrpcallowip=127.0.0.1\nrpcthreads=8\nlisten=1\nserver=1\ndaemon=1\nstaking=0\ndiscover=1\nexternalip=${mnip}:${COINPORT}\nmasternode=1\nmasternodeprivkey=${mnkey}" > ~/$COINCORE/$COINCONFIG
-    echo -e "${NONE}${GREEN}* Done${NONE}";
-}
-
-startWallet() {
-    echo
-    echo -e "[8/${MAX}] Starting wallet daemon..."
-    cd ~/$COINCORE
-    sudo rm governance.dat > /dev/null 2>&1
-    sudo rm netfulfilled.dat > /dev/null 2>&1
-    sudo rm peers.dat > /dev/null 2>&1
-    sudo rm -r blocks > /dev/null 2>&1
-    sudo rm mncache.dat > /dev/null 2>&1
-    sudo rm -r chainstate > /dev/null 2>&1
-    sudo rm fee_estimates.dat > /dev/null 2>&1
-    sudo rm mnpayments.dat > /dev/null 2>&1
-    sudo rm banlist.dat > /dev/null 2>&1
-    cd
-    $COINDAEMON -daemon > /dev/null 2>&1
-    sleep 5
-    echo -e "${GREEN}* Done${NONE}";
-}
-
-syncWallet() {
-    echo
-    echo "[9/${MAX}] Waiting for wallet to sync. It will take a while, you can go grab a coffee :)";
-    sleep 2
-    echo -e "${GREEN}* Blockchain Synced${NONE}";
-    sleep 2
-    echo -e "${GREEN}* Masternode List Synced${NONE}";
-    sleep 2
-    echo -e "${GREEN}* Winners List Synced${NONE}";
-    sleep 2
-    echo -e "${GREEN}* Done reindexing wallet${NONE}";
-}
-
 clear
 cd
 
