@@ -1,4 +1,5 @@
 #/bin/bash
+#/bin/bash
 NONE='\033[00m'
 RED='\033[01;31m'
 GREEN='\033[01;32m'
@@ -96,7 +97,7 @@ installWallet() {
 configureWallet() {
     echo
     echo -e "[7/${MAX}] Configuring wallet. Please wait..."
-    mkdir .Bitcoin_Lightning
+    mkdir .Planetpay
     rpcuser=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
     rpcpass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
     echo -e "rpcuser=${rpcuser}\nrpcpassword=${rpcpass}" > ~/$COINCORE/$COINCONFIG
@@ -151,7 +152,7 @@ cd
 echo
 echo -e "--------------------------------------------------------------------"
 echo -e "|                                                                  |"
-echo -e "|         ${BOLD}----- Planetpay Coin Masternode script -----${NONE}          |"
+echo -e "|         ${BOLD}----- Planetpay Coin Masternode script -----${NONE}             |"
 echo -e "|                                                                  |"
 echo -e "--------------------------------------------------------------------"
 
