@@ -10,7 +10,7 @@ BOLD='\033[1m'
 UNDERLINE='\033[4m'
 MAX=9
 
-COINGITHUB=https://github.com/PlanetPay/PlanetPay
+COINGITHUB=https://github.com/PlanetPay/PlanetPay.git
 COINPORT=13127
 COINRPCPORT=13126
 COINDAEMON=Planetpayd
@@ -63,41 +63,86 @@ installFirewall() {
 installDependencies() {
     echo
     echo -e "[5/${MAX}] Installing dependencies. Please wait..."
-	sudo apt-get install -y build-essential libtool autotools-dev pkg-config libssl-dev libboost-all-dev autoconf automake 2>&1
-	sudo apt-get install libzmq3-dev libminiupnpc-dev libssl-dev libevent-dev -y 2>&1
-	sudo apt-get install git 2>&1
-	git clone https://github.com/bitcoin-core/secp256k1 2>&1
-	cd ~/secp256k1 2>&1
-	./autogen.sh 2>&1
-	./configure 2>&1
-	make 2>&1
-	./tests 2>&1
-	sudo make install 2>&1
-	sudo apt-get install libgmp-dev 2>&1
-	sudo apt-get install openssl 2>&1
-	apt-get install software-properties-common && add-apt-repository ppa:bitcoin/bitcoin 2>&1
-	apt-get update 2>&1
-	apt-get install libdb4.8-dev libdb4.8++-dev 2>&1
-	sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=1000 2>&1
-	sudo mkswap /var/swap.img 2>&1
-	sudo swapon /var/swap.img 2>&1
-	sudo chmod 0600 /var/swap.img 2>&1
-	sudo chown root:root /var/swap.img 2>&1
-	cd ~ 2>&1
+    sudo apt-get install -y build-essential libtool autotools-dev pkg-config libssl-dev libboost-all-dev autoconf automake -qq -y > /dev/null 2>&1
+    sudo apt-get install libzmq3-dev libminiupnpc-dev libssl-dev libevent-dev -qq -y > /dev/null 2>&1
+    sudo apt-get install libgmp-dev -qq -y > /dev/null 2>&1
+    sudo apt-get install openssl -qq -y > /dev/null 2>&1
+    sudo apt-get install software-properties-common -qq -y > /dev/null 2>&1
+    sudo add-apt-repository ppa:bitcoin/bitcoin -y > /dev/null 2>&1
+    sudo apt-get update -qq -y > /dev/null 2>&1
+    sudo apt-get install libdb4.8-dev libdb4.8++-dev -qq -y > /dev/null 2>&1
     echo -e "${NONE}${GREEN}* Done${NONE}";
 }
 
 installWallet() {
     echo
     echo -e "[6/${MAX}] Installing wallet. Please wait..."
-    git clone https://github.com/PlanetPay/PlanetPay
-    cd ~/PlanetPay/src
-    make -f makefile.unix
-    chmod 755 Planetpayd
-    strip $COINDAEMON
-    sudo mv $COINDAEMON /usr/bin
-    cd
+    sudo dd if=/dev/zero of=/var/swap.img bs=1024k count=1000 2>&1
+	sudo mkswap /var/swap.img 2>&1
+	sudo swapon /var/swap.img 2>&1
+	sudo chmod 0600 /var/swap.img 2>&1
+	sudo chown root:root /var/swap.img 2>&1
+	cd ~ 2>&1
+	git clone https://github.com/PlanetPay/PlanetPay.git 2>&1
+	cd ~/PlanetPay/src 2>&1
+	make -f makefile.unix 2>&1
+    chmod 755 Planetpayd 2>&1
+    strip $COINDAEMON 2>&1
+    sudo mv $COINDAEMON /usr/bin 2>&1
+    cd 2>&1
     echo -e "${NONE}${GREEN}* Done${NONE}";
+}
+
+configureWallet() {
+    echo
+    echo -e "[7/${MAX}] Configuring wallet. Please wait..."
+    mkdir .Bitcoin_Lightning
+    rpcuser=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+    rpcpass=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
+    echo -e "rpcuser=${rpcuser}\nrpcpassword=${rpcpass}" > ~/$COINCORE/$COINCONFIG
+    $COINDAEMON -daemon > /dev/null 2>&1
+    sleep 10
+
+    mnip=$(curl --silent ipinfo.io/ip)
+    mnkey=$($COINDAEMON masternode genkey)
+
+    $COINDAEMON stop > /dev/null 2>&1
+    sleep 10
+
+    echo -e "rpcuser=${rpcuser}\nrpcpassword=${rpcpass}\nrpcport=${COINRPCPORT}\nrpcallowip=127.0.0.1\nrpcthreads=8\nlisten=1\nserver=1\ndaemon=1\nstaking=0\ndiscover=1\nexternalip=${mnip}:${COINPORT}\nmasternode=1\nmasternodeprivkey=${mnkey}" > ~/$COINCORE/$COINCONFIG
+    echo -e "${NONE}${GREEN}* Done${NONE}";
+}
+
+startWallet() {
+    echo
+    echo -e "[8/${MAX}] Starting wallet daemon..."
+    cd ~/$COINCORE
+    sudo rm governance.dat > /dev/null 2>&1
+    sudo rm netfulfilled.dat > /dev/null 2>&1
+    sudo rm peers.dat > /dev/null 2>&1
+    sudo rm -r blocks > /dev/null 2>&1
+    sudo rm mncache.dat > /dev/null 2>&1
+    sudo rm -r chainstate > /dev/null 2>&1
+    sudo rm fee_estimates.dat > /dev/null 2>&1
+    sudo rm mnpayments.dat > /dev/null 2>&1
+    sudo rm banlist.dat > /dev/null 2>&1
+    cd
+    $COINDAEMON -daemon > /dev/null 2>&1
+    sleep 5
+    echo -e "${GREEN}* Done${NONE}";
+}
+
+syncWallet() {
+    echo
+    echo "[9/${MAX}] Waiting for wallet to sync. It will take a while, you can go grab a coffee :)";
+    sleep 2
+    echo -e "${GREEN}* Blockchain Synced${NONE}";
+    sleep 2
+    echo -e "${GREEN}* Masternode List Synced${NONE}";
+    sleep 2
+    echo -e "${GREEN}* Winners List Synced${NONE}";
+    sleep 2
+    echo -e "${GREEN}* Done reindexing wallet${NONE}";
 }
 
 clear
@@ -106,25 +151,12 @@ cd
 echo
 echo -e "--------------------------------------------------------------------"
 echo -e "|                                                                  |"
-echo -e "|         ${BOLD}----- PlanetPay Masternode script -----${NONE}          |"
-echo -e "|                                                                  |"
-echo -e "|                                                                  |"
-echo -e "|           ${CYAN}€€€€€€€\  €€\                                €€\     €€€€€€€\${NONE}                                               |"
-echo -e "|           ${CYAN}€€  __€€\ €€ |                               €€ |    €€  __€€\${NONE}                                              |"
-echo -e "|           ${CYAN}€€ |  €€ |€€ | €€€€€€\  €€€€€€€\   €€€€€€\ €€€€€€\   €€ |  €€ |€€€€€€\  €€\   €€\${NONE}                           |"
-echo -e "|           ${CYAN}€€€€€€€  |€€ | \____€€\ €€  __€€\ €€  __€€\\_€€  _|  €€€€€€€  |\____€€\ €€ |  €€ |${NONE}                          |" 
-echo -e "|           ${CYAN}€€  ____/ €€ | €€€€€€€ |€€ |  €€ |€€€€€€€€ | €€ |    €€  ____/ €€€€€€€ |€€ |  €€ |${NONE}                          |"                   
-echo -e "|           ${CYAN}€€ |      €€ |€€  __€€ |€€ |  €€ |€€   ____| €€ |€€\ €€ |     €€  __€€ |€€ |  €€ |${NONE}                          |"
-echo -e "|           ${CYAN}€€ |      €€ |\€€€€€€€ |€€ |  €€ |\€€€€€€€\  \€€€€  |€€ |     \€€€€€€€ |\€€€€€€€ |${NONE}                          |"
-echo -e "|           ${CYAN}\__|      \__| \_______|\__|  \__| \_______|  \____/ \__|      \_______| \____€€ |${NONE}                          |"
-echo -e "|           ${CYAN}                                                                        €€\   €€ |${NONE}                          |"
-echo -e "|           ${CYAN}                                                                        \€€€€€€  |${NONE}                          |"
-echo -e "|           ${CYAN}                                                                         \______/ ${NONE}                          |"
+echo -e "|         ${BOLD}----- Planetpay Coin Masternode script -----${NONE}          |"
 echo -e "|                                                                  |"
 echo -e "--------------------------------------------------------------------"
 
 echo -e "${BOLD}"
-read -p "This script will setup your Planetpay Masternode. Do you wish to continue? (y/n)? " response
+read -p "This script will setup your PlanetPay Coin Masternode. Do you wish to continue? (y/n)? " response
 echo -e "${NONE}"
 
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
